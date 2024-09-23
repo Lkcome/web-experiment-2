@@ -1,0 +1,76 @@
+﻿@using front11.Models;
+@model Course
+@{
+	Layout = "_Layout";
+}
+
+<header class="panel-heading">
+	<div class="panel-actions">
+	</div>
+
+	<h2 class="panel-title">所有课程详细页面</h2>
+</header>
+<div class="panel-body">
+	<form class="form-horizontal form-bordered" method="get" action="@Url.Action("SaveCourse", "Course")">
+		<div class="form-group">
+			<label class="col-md-3 control-label" for="inputReadOnly">课程ID</label>
+			<div class="col-md-6">
+				<input type="text" value="@Model?.Cid" name="Cid" id="inputReadOnly" class="form-control" readonly="readonly">
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-md-3 control-label" for="inputDefault">课程名称</label>
+			<div class="col-md-6">
+				<input type="text" value="@Model?.Cname" name="Cname" class="form-control" id="inputDefault">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-md-3 control-label" for="inputDefault">课程学分</label>
+			<div class="col-md-6">
+				<input type="text" value="@Model?.Cscore" name="Cscore" class="form-control" id="inputDefault">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-md-3 control-label" for="inputDefault">课程老师</label>
+			<div class="col-md-6">
+				<input type="text" value="@Model?.Cteacher" name="Cteacher" class="form-control" id="inputDefault">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-md-3 control-label" for="inputDefault">开课学期</label>
+			<div class="col-md-6">
+				<input type="text" value="@Model?.Csem" name="Csem" class="form-control" id="inputDefault">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-md-3 control-label" for="inputDefault">上课时间</label>
+			<div class="col-md-6">
+				<input type="text" value="@Model?.Ctime" name="Ctime" class="form-control" id="inputDefault">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-md-3 control-label" for="inputDefault">上课教室</label>
+			<div class="col-md-6">
+				<input type="text" value="@Model?.Cclassroom" name="Cclassroom" class="form-control" id="inputDefault">
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-md-3 control-label"></label>
+			<div class="col-sm-8">
+				<div class="row">
+					<div class="col-sm-2">
+						<button type="submit" class="mb-xs mt-xs mr-xs btn btn-primary">保存</button>
+					</div>
+					<div class="visible-xs mb-md"></div>
+					<div class="col-sm-3">
+						<button type="button" onclick="location.href='/Course/ShowAllCourse'" class="mb-xs mt-xs mr-xs btn btn-default">返回</button>
+					</div>
+
+				</div>
+
+			</div>
+		</div>
+	</form>
+</div>

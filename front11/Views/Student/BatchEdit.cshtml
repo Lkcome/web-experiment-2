@@ -1,0 +1,111 @@
+﻿@model List<front11.Models.Student>
+
+@{
+    Layout = "_Layout";
+}
+
+
+<title>批量修改课程</title>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<style>
+    .selected {
+        border: 2px solid #007bff;
+    }
+
+    .student-input {
+        cursor: pointer;
+        width: 250px; /* 设置输入框的宽度，可以根据需要调整 */
+        box-sizing: border-box; /* 确保宽度包括内边距和边框 */
+    }
+
+    .table td {
+        vertical-align: middle;
+        padding: 5px 10px; /* 减少内边距使列更紧凑 */
+    }
+
+    .table {
+        min-width: 1700px; /* 调整这个宽度直到滚动条出现 */
+        border-spacing: 0 5px; /* 减少列之间的间距 */
+    }
+
+    .scrollable-table-container {
+        overflow-x: auto; /* 启用水平滚动 */
+        width: 100%;
+    }
+ </style>
+    <div class="container mt-5">
+        <h2>批量修改课程</h2>
+        <form asp-action="UpdateBatchStudents" method="post">
+            <div class="scrollable-table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Student Name</th>
+                            <th>Student Class</th>
+                            <th>Student Password</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    @Html.HiddenFor(modelItem => Model[i].Sid)
+                                    @Html.DisplayFor(modelItem => Model[i].Sid)
+                                </td>
+                                <td>
+                                    @Html.TextBoxFor(modelItem => Model[i].Sname, new { @class = "form-control student-input" })
+                                </td>
+                                <td>
+                                    @Html.TextBoxFor(modelItem => Model[i].Sclass, new { @class = "form-control student-input" })
+                                </td>
+                                <td>
+                                    @Html.TextBoxFor(modelItem => Model[i].Spassword, new { @class = "form-control student-input" })
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <button type="button" class="btn btn-primary" id="apply-common-value">修改选中项</button>
+            </div>
+            <br>
+            <button type="submit" class="btn btn-primary mt-2">保存更改</button>
+            <button type="button" class="btn btn-primary" onclick="window.location.href='/Student/ShowAllStudent'">返回</button>
+        </form>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            // 点击输入框时选中/取消选中
+            $('.student-input').on('click', function () {
+                $(this).toggleClass('selected');
+            });
+
+            // 统一应用值到选中的输入框
+            $('#apply-common-value').on('click', function () {
+                var selectedInputs = $('.student-input.selected');
+                if (selectedInputs.length === 0) {
+                    alert('请你选择你要修改的课程信息');
+                    return;
+                }
+                
+                var commonValue = prompt("请输入统一的值:");
+                if (commonValue !== null) {
+                    $('.student-input.selected').each(function () {
+                        $(this).val(commonValue);
+                    });
+                }
+            });
+
+            // 防止点击时输入框聚焦导致的默认选中文本
+            $('.student-input').on('focus', function () {
+                if ($(this).hasClass('selected')) {
+                    this.blur();
+                }
+            });
+        });
+    </script>

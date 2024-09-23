@@ -1,0 +1,306 @@
+﻿@using front11.Models;
+@model List<Course>
+@{
+    Layout = "_Layout";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选课界面</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .info-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .info-section, .calendar, .timer {
+            flex: 1;
+            padding: 20px;
+            width: 100%;
+        }
+
+            .info-section p {
+                margin: 0;
+                font-size: 14px;
+            }
+
+        .calendar, .timer {
+            text-align: center;
+        }
+
+            .timer p {
+                margin: 10px 0;
+                font-size: 18px;
+            }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+        }
+
+            button:disabled {
+                color: gray;
+                background-color: #ccc;
+            }
+
+        .button-active {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .button-disabled {
+            background-color: #ccc;
+            color: gray;
+        }
+
+        .timer-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .calendar table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .calendar th, .calendar td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .highlight-preview-start {
+            background-color: #ffeb3b;
+        }
+
+        .highlight-selection-start {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .highlight-selection-end {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .flex-row {
+            display: flex;
+            width: 100%;
+        }
+
+        .timer {
+            background-color: white;
+            border: 2px solid #ff6600;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+            .timer h2 {
+                color: #333;
+                margin-bottom: 10px;
+            }
+
+            .timer p {
+                color: #666;
+                margin: 5px 0;
+            }
+
+        .countdown {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="info-panel">
+            <h1>2024-2025-1 全体在校生挂科上课课程、选修课程——意愿值选课</h1>
+            <div class="flex-row">
+                <div class="info-section">
+                    <h2>选课公告</h2>
+                    <p>学生应按时缴纳学费及有关费用，确认无欠费后，方可进行网上选课！相关学生可通过西安交通科技大学财务处微信公众号缴纳，点击“必办事项-学费缴纳”。学生缴费、选课缴费项目由使用微信缴费。缴费后两个小时自动开通选课权限，如有问题请咨询财务处收费中心，电话82202609。</p>
+                    <p>注意：</p>
+                    <p>1. 2023级《大学英语3》及英语拓展课本学期暂不开放网上选课，系统将在《大学英语3》课开课前统一占用。</p>
+                    <p>2. 下学期开学初选修体育类课程的同学，相关学年应根据CET成绩、教学安排通知选课安排申请免修。</p>
+                    <p>3. 2023级《毛泽东思想和中国特色社会主义理论体系概论》与《习近平新时代中国特色社会主义思想概论》两门课程</p>
+                </div>
+                <div class="calendar" id="calendar">
+                    <h2 id="calendar-title">2024年6月</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>日</th>
+                                <th>一</th>
+                                <th>二</th>
+                                <th>三</th>
+                                <th>四</th>
+                                <th>五</th>
+                                <th>六</th>
+                            </tr>
+                        </thead>
+                        <tbody id="calendar-body">
+                            <!-- 日历内容将由JavaScript生成 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="timer">
+                    <h2>选课时间</h2>
+                    <p id="preview-time">预览时间：</p>
+                    <p id="selection-time">选课时间：</p>
+                    <div id="timer" class="countdown">距离选课开始还有：00:00:00</div>
+                    <div class="timer-section">
+                        <button id="enrollButton" class="button-disabled" disabled>开始选课</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const enrollButton = document.getElementById('enrollButton');
+            const timerDisplay = document.getElementById('timer');
+            const calendarBody = document.getElementById('calendar-body');
+            const calendarTitle = document.getElementById('calendar-title');
+            const previewTimeDisplay = document.getElementById('preview-time');
+            const selectionTimeDisplay = document.getElementById('selection-time');
+
+            // 请求后端获取选课时间
+            fetch('/SelectCourse/GetSelectionTime')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const selectionStartTime = new Date(data.startTime);
+                        const selectionEndTime = new Date(data.endTime);
+                        const previewStartTime = new Date(selectionStartTime.getTime() - (24 * 60 * 60 * 1000));
+
+                        // 更新时间显示
+                        previewTimeDisplay.innerText = `预览时间：${formatDate(previewStartTime)} ~ ${formatDate(selectionEndTime)}`;
+                        selectionTimeDisplay.innerText = `选课时间：${formatDate(selectionStartTime)} ~ ${formatDate(selectionEndTime)}`;
+
+                        // 初始化日历和计时器
+                        initCalendarAndTimer(selectionStartTime, selectionEndTime, previewStartTime);
+                    } else {
+                        alert(data.message);
+                    }
+                });
+
+            function initCalendarAndTimer(selectionStartTime, selectionEndTime, previewStartTime) {
+                generateCalendar(selectionStartTime.getFullYear(), selectionStartTime.getMonth(), previewStartTime, selectionStartTime, selectionEndTime);
+                updateCountdown(selectionStartTime, selectionEndTime);
+                setInterval(() => updateCountdown(selectionStartTime, selectionEndTime), 1000);
+            }
+
+            function formatDate(date) {
+                return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+            }
+
+            function updateCountdown(selectionStartTime, selectionEndTime) {
+                const now = new Date();
+                let remainingTime;
+
+                if (now < selectionStartTime) {
+                    remainingTime = selectionStartTime - now;
+                    timerDisplay.innerText = `距离选课开始还有：${formatTime(remainingTime)}`;
+                    enrollButton.disabled = true;
+                    enrollButton.classList.add('button-disabled');
+                    enrollButton.classList.remove('button-active');
+                } else if (now >= selectionStartTime && now <= selectionEndTime) {
+                    remainingTime = selectionEndTime - now;
+                    timerDisplay.innerText = `选课结束还剩：${formatTime(remainingTime)}`;
+                    enrollButton.disabled = false;
+                    enrollButton.classList.add('button-active');
+                    enrollButton.classList.remove('button-disabled');
+                    enrollButton.onclick = function () {
+                        window.location.href = '/SelectCourse/Select'; // 如果再时间内跳转到选课界面
+                    };
+                } else {
+                    timerDisplay.innerText = '选课已结束';
+                    enrollButton.disabled = true;
+                    enrollButton.classList.remove('button-active');
+                    enrollButton.classList.add('button-disabled');
+                }
+            }
+
+            function formatTime(duration) {
+                const days = Math.floor(duration / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+                const minutes = Math.floor((duration / (1000 * 60)) % 60);
+                const seconds = Math.floor((duration / 1000) % 60);
+                return `${days}天 ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+            }
+
+            function pad(number) {
+                return number < 10 ? '0' + number : number;
+            }
+
+            function generateCalendar(year, month, previewStartTime, selectionStartTime, selectionEndTime) {
+                calendarBody.innerHTML = '';
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                let date = 1;
+
+                for (let i = 0; i < 6; i++) {
+                    const row = document.createElement('tr');
+                    for (let j = 0; j < 7; j++) {
+                        const cell = document.createElement('td');
+                        if (i === 0 && j < firstDay) {
+                            cell.innerHTML = '';
+                        } else if (date > daysInMonth) {
+                            break;
+                        } else {
+                            const cellDate = new Date(year, month, date);
+                            cell.innerHTML = date;
+                            if (cellDate.toDateString() === previewStartTime.toDateString()) {
+                                cell.classList.add('highlight-preview-start');
+                            }
+                            if (cellDate.toDateString() === selectionStartTime.toDateString()) {
+                                cell.classList.add('highlight-selection-start');
+                            }
+                            if (cellDate.toDateString() === selectionEndTime.toDateString()) {
+                                cell.classList.add('highlight-selection-end');
+                            }
+                            date++;
+                        }
+                        row.appendChild(cell);
+                    }
+                    calendarBody.appendChild(row);
+                }
+                calendarTitle.innerText = `${year}年${month + 1}月`;
+            }
+        });
+    </script>
+
+</body>
+</html>

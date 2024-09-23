@@ -1,0 +1,239 @@
+﻿@using front11.Models;
+@model CourseViewModel
+@{
+    Layout = "_Layout";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选课界面</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .filter-section {
+            margin-bottom: 20px;
+        }
+
+        .table th, .table td {
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .pagination {
+            justify-content: center;
+        }
+
+        .status-available {
+            color: green;
+        }
+
+        .status-selected {
+            color: red;
+        }
+
+        .status-waiting {
+            color: orange;
+        }
+
+        .actions .btn {
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>2024-2025-1 全体在校生挂科上课课程、选修课程——意愿值选课</h1>
+        <div class="mb-3">
+            <button class="btn btn-primary" onclick="window.location.href='/SelectCourse/Select'">全部课程</button>
+            <button class="btn btn-secondary" onclick="window.location.href='/SelectCourse/SelectedCourses'">已选课程</button>
+        </div>
+        <div class="filter-section">
+            <div class="row">
+                <div class="col">
+                    <input type="text" id="searchCourse" class="form-control" placeholder="课程" value="@ViewBag.SearchCourse">
+                </div>
+                <div class="col">
+                    <input type="text" id="searchSemester" class="form-control" placeholder="教学学期" value="@ViewBag.SearchSemester">
+                </div>
+                <div class="col">
+                    <input type="text" id="searchTeacher" class="form-control" placeholder="授课教师" value="@ViewBag.SearchTeacher">
+                </div>
+                <div class="col">
+                    <select class="form-control">
+                        <option>开课部门</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <select class="form-control">
+                        <option>上课院区</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col">
+                    <select class="form-control">
+                        <option>上课年级</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <select class="form-control">
+                        <option>上课系</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <select class="form-control">
+                        <option>上课专业</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <select class="form-control">
+                        <option>上课行政班</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <select class="form-control">
+                        <option>是否可选课程</option>
+                    </select>
+                </div>
+                <div class="col text-right">
+                    
+                    <button class="btn btn-primary" id="searchButton">搜索</button>
+                    <button class="btn btn-primary" id="resetButton">重置</button>
+                </div>
+            </div>
+        </div>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>课程信息</th>
+                    <th>教学学期</th>
+                    <th>授课教师</th>
+                    <th>时间地点</th>
+                    <th>已选人数上限</th>
+                    <th>选课状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var course in Model.Courses)
+                {
+                    var isSelected = Model.SelectedCourseIds.Contains(course.Cid);
+                    <tr>
+                        <td>
+                            <strong>@course.Cname</strong><br>
+                            @course.Cid<br>
+                            @course.Cscore 学分<br>
+                        </td>
+                        <td>@course.Csem</td>
+                        <td>@course.Cteacher</td>
+                        <td>@course.Ctime<br>@course.Cclassroom</td>
+                        <td>未满</td>
+                        <td class="@(isSelected ? "status-selected" : "status-waiting")" id="status-@course.Cid">
+                            @(isSelected ? "已选课" : "待选课")
+                        </td>
+                        <td class="actions">
+                            <button class="btn @(isSelected ? "btn-danger" : "btn-primary") select-course" data-id="@course.Cid" id="button-@course.Cid">
+                                @(isSelected ? "退课" : "选课")
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <nav>
+            <ul class="pagination">
+                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" href="?page=@(Model.CurrentPage - 1)&searchCourse=@ViewBag.SearchCourse&searchSemester=@ViewBag.SearchSemester&searchTeacher=@ViewBag.SearchTeacher">«</a>
+                </li>
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                        <a class="page-link" href="?page=@i&searchCourse=@ViewBag.SearchCourse&searchSemester=@ViewBag.SearchSemester&searchTeacher=@ViewBag.SearchTeacher">@i</a>
+                    </li>
+                }
+                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="?page=@(Model.CurrentPage + 1)&searchCourse=@ViewBag.SearchCourse&searchSemester=@ViewBag.SearchSemester&searchTeacher=@ViewBag.SearchTeacher">»</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.select-course').click(function () {
+                var courseId = $(this).data('id');
+                var button = $(this);
+                var statusCell = $('#status-' + courseId);
+
+                // 添加退课确认对话框
+                var confirmAction = function () {
+                    $.post('/SelectCourse/SelectCourse', { courseId: courseId }, function (response) {
+                        if (response.success) {
+                            // 根据返回的selected状态更新按钮和状态
+                            if (response.selected) {
+                                button.text('退课').removeClass('btn-primary').addClass('btn-danger');
+                                statusCell.text('已选课').removeClass('status-waiting').addClass('status-selected');
+                            } else {
+                                button.text('选课').removeClass('btn-danger').addClass('btn-primary');
+                                statusCell.text('待选课').removeClass('status-selected').addClass('status-waiting');
+                            }
+                            alert(response.message);
+                        } else {
+                            alert(response.message);
+                        }
+                    }, 'json');
+                };
+                // 判断是否是退课按钮
+                if (button.text() === '退课') {
+                    if (confirm("您确定要退课吗？")) {
+                        confirmAction();
+                    }
+                } else {
+                    confirmAction();
+                }
+            });
+            $('#searchButton').click(function () {
+                var searchCourse = $('#searchCourse').val();
+                var searchSemester = $('#searchSemester').val();
+                var searchTeacher = $('#searchTeacher').val();
+                window.location.href = `?searchCourse=${searchCourse}&searchSemester=${searchSemester}&searchTeacher=${searchTeacher}`;
+            });
+
+            $('#resetButton').click(function () {
+                window.location.href = '?';
+            });
+        });
+    </script>
+</body>
+</html>

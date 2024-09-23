@@ -1,0 +1,184 @@
+﻿@model List<front11.Models.Student>
+
+@{
+    Layout = "_Layout";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量添加学生</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <style>
+        .student-form-group {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .remove-student {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: transparent;
+            border: none;
+            color: red;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        .container {
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>批量添加学生</h2>
+
+        <!-- Excel 导入的表单 -->
+        <form asp-action="ImportExcel" method="post" enctype="multipart/form-data" id="excelUploadForm">
+            <div class="form-group mt-3">
+                <label for="fileUpload">上传Excel文件:</label>
+                <input type="file" class="form-control-file" id="fileUpload" name="file" required accept=".xls, .xlsx">
+                <button type="submit" class="btn btn-primary mt-2">导入Excel</button>
+            </div>
+        </form>
+
+        <!-- 手动添加课程的表单 -->
+        <form id="batchAddForm">
+            <div id="student-forms">
+                <div class="student-form-group">
+                    <button type="button" class="btn btn-danger remove-student">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                    <div class="form-group">
+                        <label for="Sid">Student ID</label>
+                        <input type="text" class="form-control" name="students[0].Sid" placeholder="请输入学生代码">
+                    </div>
+                    <div class="form-group">
+                        <label for="Sname">Student Name</label>
+                        <input type="text" class="form-control" name="students[0].Sname" placeholder="请输入学生名称">
+                    </div>
+                    <div class="form-group">
+                        <label for="Sclass">Student Class</label>
+                        <input type="text" class="form-control" name="students[0].Sclass" placeholder="请输入班级">
+                    </div>
+                    <div class="form-group">
+                        <label for="Spassword">Student Password</label>
+                        <input type="text" class="form-control" name="students[0].Spassword" placeholder="请输入学生密码">
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-secondary" id="add-student">添加更多学生</button>
+            <button type="button" class="btn btn-primary" id="submit-button">保存</button>
+            <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='/Student/ShowAllStudent'">返回</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('add-student').addEventListener('click', function () {
+            var studentForms = document.getElementById('student-forms');
+            var index = document.querySelectorAll('.student-form-group').length;
+            var newStudentForm = `
+                <div class="student-form-group">
+                    <button type="button" class="btn btn-danger remove-student">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                    <div class="form-group">
+                        <label for="Sid">Student ID</label>
+                        <input type="text" class="form-control" name="students[${index}].Sid" placeholder="请输入学生代码">
+                    </div>
+                    <div class="form-group">
+                        <label for="Sname">Student Name</label>
+                        <input type="text" class="form-control" name="students[${index}].Sname" placeholder="请输入学生名称">
+                    </div>
+                    <div class="form-group">
+                        <label for="Sclass">Student Class</label>
+                        <input type="text" class="form-control" name="students[${index}].Sclass" placeholder="请输入学生班级">
+                    </div>
+                    <div class="form-group">
+                        <label for="Spassword">Student Password</label>
+                        <input type="text" class="form-control" name="students[${index}].Spassword" placeholder="请输入密码">
+                    </div>
+                </div>
+            `;
+            studentForms.insertAdjacentHTML('beforeend', newStudentForm);
+        });
+
+        // 删除课程信息区块
+        document.getElementById('student-forms').addEventListener('click', function (event) {
+            if (event.target.closest('.remove-student')) {
+                event.target.closest('.student-form-group').remove();
+            }
+        });
+
+        // 提交手动添加的课程
+        document.getElementById('submit-button').addEventListener('click', function (event) {
+            event.preventDefault();
+            var studentElements = document.querySelectorAll('.student-form-group');
+            var students = Array.from(studentElements).map(group => ({
+                Sid: group.querySelector('input[name*="Sid"]').value,
+                Sname: group.querySelector('input[name*="Sname"]').value,
+                Sclass: group.querySelector('input[name*="Sclass"]').value,
+                Spassword: group.querySelector('input[name*="Spassword"]').value,
+            }));
+
+            // 过滤空的课程数据
+            students = students.filter(student => Object.values(student).some(value => value.trim() !== ''));
+
+            if (students.length === 0) {
+                alert("请至少填写完整一个课程的所有必需信息。");
+                return;
+            }
+
+            // 发送数据到后端
+            fetch('@Url.Action("BatchAdd", "Student")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(students)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if (data.success) {
+                        window.location.href = '@Url.Action("ShowAllStudent", "Student")';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('操作失败: ' + error.message);
+                });
+        });
+
+
+
+        // 提交 Excel 导入
+        document.getElementById('excelUploadForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+            fetch('@Url.Action("ImportExcel", "Student")', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) {
+                    window.location.href = '@Url.Action("ShowAllStudent", "Student")';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('操作失败: ' + error.message);
+            });
+        });
+    </script>
+</body>
+</html>

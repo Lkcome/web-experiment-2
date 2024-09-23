@@ -1,0 +1,232 @@
+﻿@using front11.Models;
+@model List<Student>
+@{
+	Layout = "_Layout";
+}
+
+
+<header class="panel-heading">
+	<div class="panel-actions">
+		<a href="#" class="fa fa-caret-down"></a>
+		<a href="#" class="fa fa-times"></a>
+	</div>
+	<h2 class="panel-title">学生信息</h2>
+	<style>
+		.pagination {
+			display: flex;
+			justify-content: center; /* 居中所有子项 */
+			list-style: none; /* 去除默认列表样式 */
+			padding: 0; /* 去除默认的内边距 */
+		}
+
+	</style>
+</header>
+<div class="panel-body">
+	<div class="table-responsive">
+		<div class="mb-3">
+			<button class="btn btn-danger" id="delete-selected">批量删除</button>
+			<button class="btn btn-primary" id="edit-selected">批量修改</button>
+			<button class="btn btn-success" id="add-new">批量添加</button>
+			<input type="text" id="search" class="form-control d-inline-block w-auto ml-3" placeholder="搜索学生">
+			<button class="btn btn-info ml-1" id="search-button">搜索</button>
+		</div>
+		<table class="table mb-none">
+			<thead>
+				<tr>
+					<th><input type="checkbox" id="select-all" /></th>
+					<th>Student ID</th>
+					<th>Student Name</th>
+					<th>Student Class</th>
+					<th>Student Password</th>
+				</tr>
+			</thead>
+			<tbody id="student-tbody">
+				@foreach (var item in Model)
+				{
+
+
+					<tr>
+						<td><input type="checkbox" class="select-row" data-id="@item.Sid" /></td>
+						<td>@item.Sid</td>
+						<td>@item.Sname</td>
+						<td>@item.Sclass</td>
+						<td>@item.Spassword</td>
+						<td class="actions">
+							<a href="/Student/studentEdit/@item.Sid"><i class="fa fa-pencil"></i></a>
+							<a href="" class="delete-row"><i class="fa fa-trash-o"></i></a>
+							@* 							<a href="" class="add-on"><i class="fa fa-plus"></i></a> *@
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+	<nav aria-label="Page navigation example">
+		<ul class="pagination justify-content-center">
+			<li class="page-item"><a class="page-link" href="@Url.Action("ShowAllStudent", new { page = 1 })">首页</a></li>
+			<li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+				<a class="page-link" href="@Url.Action("ShowAllStudent", new { page = ViewBag.CurrentPage - 1 })" aria-label="Previous">
+					<span aria-hidden="true">&laquo;</span>
+				</a>
+			</li>
+			@for (int i = 1; i <= ViewBag.TotalPages; i++)
+			{
+				<li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+					<a class="page-link" href="@Url.Action("ShowAllStudent", new { page = i })">@i</a>
+				</li>
+			}
+			<li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+				<a class="page-link" href="@Url.Action("ShowAllStudent", new { page = ViewBag.CurrentPage + 1 })" aria-label="Next">
+					<span aria-hidden="true">&raquo;</span>
+				</a>
+			</li>
+			<li class="page-item"><a class="page-link" href="@Url.Action("ShowAllCourse", new { page = ViewBag.TotalPages })">末页</a></li>
+		</ul>
+	</nav>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script>
+	// Select all functionality
+	document.getElementById('select-all').addEventListener('change', function () {
+		var checkboxes = document.querySelectorAll('.select-row');
+		for (var checkbox of checkboxes) {
+			checkbox.checked = this.checked;
+		}
+	});
+	// 批量删除功能
+	document.getElementById('delete-selected').addEventListener('click', function () {
+		var selectedIds = Array.from(document.querySelectorAll('.select-row:checked')).map(cb => cb.getAttribute('data-id'));
+		if (selectedIds.length > 0) {
+			if (confirm('您确定要删除这些课程吗？')) {
+				fetch('/Student/DeleteSelected', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(selectedIds)
+				}).then(response => {
+					if (response.ok) {
+						// 刷新页面或者从DOM中移除被删除的行
+						response.json().then(data => {
+							alert(data.message); // 可选：提供操作反馈
+							window.location.reload(); // 刷新页面以更新列表
+						});
+					} else {
+						return response.text().then(text => { throw new Error(text); });
+					}
+				}).catch(error => {
+					alert('删除过程中出现错误: ' + error.message);
+				});
+			}
+		} else {
+			alert('请选择要删除的学生');
+		}
+	});
+
+	// 批量修改功能
+	document.getElementById('edit-selected').addEventListener('click', function () {
+		var selectedIds = Array.from(document.querySelectorAll('.select-row:checked')).map(cb => cb.getAttribute('data-id'));
+		if (selectedIds.length > 0) {
+			var form = document.createElement('form');
+			form.method = 'GET';
+			form.action = '/Student/BatchEdit';
+			selectedIds.forEach(id => {
+				var input = document.createElement('input');
+				input.type = 'hidden';
+				input.name = 'selectedIds';
+				input.value = id;
+				form.appendChild(input);
+			});
+			document.body.appendChild(form);
+			form.submit();
+		} else {
+			alert('请选择要修改的学生');
+		}
+	});
+
+	// 批量添加功能
+	document.getElementById('add-new').addEventListener('click', function () {
+		window.location.href = '/Student/BatchAdd';
+	});
+
+	// 搜索功能
+	document.getElementById('search-button').addEventListener('click', function () {
+		var searchTerm = document.getElementById('search').value.trim();
+		if (searchTerm) {
+			fetch(`/Student/SearchStudents?query=${encodeURIComponent(searchTerm)}`, {
+				method: 'GET'
+			})
+				.then(response => response.json())
+				.then(data => {
+					if (data.success) {
+						var tbody = document.getElementById('student-tbody');
+						tbody.innerHTML = ''; // 清空现有内容
+						data.students.forEach(student => {
+							var row = `
+									<tr>
+										<td><input type="checkbox" class="select-row" data-id="${student.sid}" /></td>
+										<td>${student.sid}</td>
+										<td>${student.sname}</td>
+										<td>${student.sclass}</td>
+										<td>${student.spassword}</td>
+
+										<td class="actions">
+											<a href="/Student/studentEdit/${student.sid}"><i class="fa fa-pencil"></i></a>
+											<a href="#" class="delete-row"><i class="fa fa-trash-o"></i></a>
+										</td>
+									</tr>
+								`;
+							tbody.insertAdjacentHTML('beforeend', row);
+						});
+					} else {
+						alert(data.message);
+					}
+				})
+				.catch(error => {
+					console.error('搜索失败:', error);
+					alert('搜索过程中发生错误。');
+				});
+		} else {
+			alert('请输入搜索条件');
+		}
+	});
+
+
+
+	//图标单个删除功能
+	document.addEventListener('DOMContentLoaded', function () {
+		const tableBody = document.getElementById('student-tbody');
+		tableBody.addEventListener('click', function (event) {
+			let target = event.target;
+
+			// 确保点击的是删除图标或其父链接
+			if (target.classList.contains('fa-trash-o')) {
+				target = target.parentElement; // 如果点击的是图标，将目标设置为父链接
+			}
+
+			if (target.classList.contains('delete-row')) {
+				event.preventDefault(); // 防止链接跳转
+				const row = target.closest('tr'); // 获取当前行
+				const id = row.querySelector('.select-row').getAttribute('data-id'); // 获取ID
+
+				if (confirm('您确定要删除这位学生吗？')) {
+					// 发送删除请求
+					fetch(`/Student/Delete?id=${id}`, {
+						method: 'POST'
+					}).then(response => response.json())
+						.then(data => {
+							if (data.success) {
+								row.remove(); // 从页面中移除这行
+								alert(data.message);
+							} else {
+								alert(data.message);
+							}
+						}).catch(error => {
+							console.error('删除错误:', error);
+							alert('删除过程中发生错误。');
+						});
+				}
+			}
+		});
+	});
+
+</script>

@@ -1,0 +1,211 @@
+﻿@model List<front11.Models.Course>
+
+@{
+    Layout = "_Layout";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量添加课程</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <style>
+        .course-form-group {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .remove-course {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: transparent;
+            border: none;
+            color: red;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        .container {
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>批量添加课程</h2>
+
+        <!-- Excel 导入的表单 -->
+        <form asp-action="ImportExcel" method="post" enctype="multipart/form-data" id="excelUploadForm">
+            <div class="form-group mt-3">
+                <label for="fileUpload">上传Excel文件:</label>
+                <input type="file" class="form-control-file" id="fileUpload" name="file" required accept=".xls, .xlsx">
+                <button type="submit" class="btn btn-primary mt-2">导入Excel</button>
+            </div>
+        </form>
+
+        <!-- 手动添加课程的表单 -->
+        <form id="batchAddForm">
+            <div id="course-forms">
+                <div class="course-form-group">
+                    <button type="button" class="btn btn-danger remove-course">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                    <div class="form-group">
+                        <label for="Cid">Course ID</label>
+                        <input type="text" class="form-control" name="courses[0].Cid" placeholder="请输入课程代码">
+                    </div>
+                    <div class="form-group">
+                        <label for="Cname">Course Name</label>
+                        <input type="text" class="form-control" name="courses[0].Cname" placeholder="请输入课程名称">
+                    </div>
+                    <div class="form-group">
+                        <label for="Cscore">Course Score</label>
+                        <input type="text" class="form-control" name="courses[0].Cscore" placeholder="请输入课程学分">
+                    </div>
+                    <div class="form-group">
+                        <label for="Cteacher">Course Teacher</label>
+                        <input type="text" class="form-control" name="courses[0].Cteacher" placeholder="请输入教师名称">
+                    </div>
+                    <div class="form-group">
+                        <label for="Csem">Course Semester</label>
+                        <input type="text" class="form-control" name="courses[0].Csem" placeholder="请输入课程开课学期">
+                    </div>
+                    <div class="form-group">
+                        <label for="Ctime">Course Time</label>
+                        <input type="text" class="form-control" name="courses[0].Ctime" placeholder="请输入课程上课时间">
+                    </div>
+                    <div class="form-group">
+                        <label for="Cclassroom">Course Classroom</label>
+                        <input type="text" class="form-control" name="courses[0].Cclassroom" placeholder="请输入课程上课地址">
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-secondary" id="add-course">添加更多课程</button>
+            <button type="button" class="btn btn-primary" id="submit-button">保存</button>
+            <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='/Course/ShowAllCourse'">返回</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('add-course').addEventListener('click', function () {
+            var courseForms = document.getElementById('course-forms');
+            var index = document.querySelectorAll('.course-form-group').length;
+            var newCourseForm = `
+                <div class="course-form-group">
+                    <button type="button" class="btn btn-danger remove-course">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                    <div class="form-group">
+                        <label for="Cid">Course ID</label>
+                        <input type="text" class="form-control" name="courses[${index}].Cid" placeholder="请输入课程代码">
+                    </div>
+                    <div class="form-group">
+                        <label for="Cname">Course Name</label>
+                        <input type="text" class="form-control" name="courses[${index}].Cname" placeholder="请输入课程名称">
+                    </div>
+                    <div class="form-group">
+                        <label for="Cscore">Course Score</label>
+                        <input type="text" class="form-control" name="courses[${index}].Cscore" placeholder="请输入课程学分">
+                    </div>
+                    <div class="form-group">
+                        <label for="Cteacher">Course Teacher</label>
+                        <input type="text" class="form-control" name="courses[${index}].Cteacher" placeholder="请输入教师名称">
+                    </div>
+                    <div class="form-group">
+                        <label for="Csem">Course Semester</label>
+                        <input type="text" class="form-control" name="courses[${index}].Csem" placeholder="请输入课程开课学期">
+                    </div>
+                    <div class="form-group">
+                        <label for="Ctime">Course Time</label>
+                        <input type="text" class="form-control" name="courses[${index}].Ctime" placeholder="请输入课程上课时间">
+                    </div>
+                    <div class="form-group">
+                        <label for="Cclassroom">Course Classroom</label>
+                        <input type="text" class="form-control" name="courses[${index}].Cclassroom" placeholder="请输入课程上课地址">
+                    </div>
+                </div>
+            `;
+            courseForms.insertAdjacentHTML('beforeend', newCourseForm);
+        });
+
+        // 删除课程信息区块
+        document.getElementById('course-forms').addEventListener('click', function (event) {
+            if (event.target.closest('.remove-course')) {
+                event.target.closest('.course-form-group').remove();
+            }
+        });
+
+        // 提交手动添加的课程
+        document.getElementById('submit-button').addEventListener('click', function (event) {
+            event.preventDefault();
+            var courseElements = document.querySelectorAll('.course-form-group');
+            var courses = Array.from(courseElements).map(group => ({
+                Cid: group.querySelector('input[name*="Cid"]').value,
+                Cname: group.querySelector('input[name*="Cname"]').value,
+                Cscore: group.querySelector('input[name*="Cscore"]').value,
+                Cteacher: group.querySelector('input[name*="Cteacher"]').value,
+                Csem: group.querySelector('input[name*="Csem"]').value,
+                Ctime: group.querySelector('input[name*="Ctime"]').value,
+                Cclassroom: group.querySelector('input[name*="Cclassroom"]').value
+            }));
+
+            // 过滤空的课程数据
+            courses = courses.filter(course => Object.values(course).some(value => value.trim() !== ''));
+
+            if (courses.length === 0) {
+                alert("请至少填写完整一个课程的所有必需信息。");
+                return;
+            }
+
+            // 发送数据到后端
+            fetch('@Url.Action("BatchAdd", "Course")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(courses)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if (data.success) {
+                        window.location.href = '@Url.Action("ShowAllCourse", "Course")';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('操作失败: ' + error.message);
+                });
+        });
+
+
+
+        // 提交 Excel 导入
+        document.getElementById('excelUploadForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+            fetch('@Url.Action("ImportExcel", "Course")', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) {
+                    window.location.href = '@Url.Action("ShowAllCourse", "Course")';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('操作失败: ' + error.message);
+            });
+        });
+    </script>
+</body>
+</html>

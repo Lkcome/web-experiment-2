@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>选课时间管理</title>
+</head>
+<body>
+    <h1>选课时间管理</h1>
+    <form id="timeForm">
+        <label for="startTime">选课开始时间:</label>
+        <input type="datetime-local" id="startTime" name="startTime" required><br><br>
+        <label for="endTime">选课结束时间:</label>
+        <input type="datetime-local" id="endTime" name="endTime" required><br><br>
+        <button type="button" onclick="submitTimes()">更新时间</button>
+    </form>
+
+    <script>
+        function submitTimes() {
+            var startTime = document.getElementById('startTime').value;
+            var endTime = document.getElementById('endTime').value;
+
+            fetch('/SelectCourse/SetSelectionTime', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    SelectionStartTime: startTime,
+                    SelectionEndTime: endTime
+                })
+            })
+                .then(response => response.json())
+                .then(data => alert(data.message))
+                .catch(error => console.error('Error:', error));
+        }
+
+    </script>
+</body>
+</html>

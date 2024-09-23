@@ -1,0 +1,16 @@
+﻿/* styles.css */
+#infoPanel {
+    text-align: center;
+    margin-top: 50px;
+}
+
+button:disabled {
+    color: gray;
+    background-color: #ccc;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
